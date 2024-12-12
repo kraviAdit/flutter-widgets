@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
+import 'resouce/main.dart';
+
 void main() {
   return runApp(const CalendarApp());
 }
@@ -11,7 +13,9 @@ class CalendarApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(title: 'Calendar Demo', home: MyHomePage());
+    return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Calendar Demo', home: EventCalendar() /*MyHomePage()*/);
   }
 }
 
