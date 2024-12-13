@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:intl/intl.dart';
 
 import 'resouce/main.dart';
 
@@ -15,7 +18,8 @@ class CalendarApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Calendar Demo', home: EventCalendar() /*MyHomePage()*/);
+        title: 'Calendar Demo',
+        home:  EventCalendar() /*MyHomePage()*/);
   }
 }
 
@@ -33,32 +37,106 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: SfCalendar(
-      view: CalendarView.month,
-      dataSource: MeetingDataSource(_getDataSource()),
-      // by default the month appointment display mode set as Indicator, we can
-      // change the display mode as appointment using the appointment display
-      // mode property
-      monthViewSettings: const MonthViewSettings(
-          appointmentDisplayMode: MonthAppointmentDisplayMode.appointment),
+        body: SafeArea(
+      child: SfCalendar(
+        allowDragAndDrop: true,
+        view: CalendarView.week,
+        appointmentBuilder: appointmentBuilder/*(context, calendarAppointmentDetails) {
+          final Meeting appointment =
+              calendarAppointmentDetails.appointments.first;
+          return Container(
+            width: 10,
+              color: Colors.amber, child: Text(appointment.eventName));
+        }*/,
+        onDragEnd: (appointmentDragEndDetails) {
+          print(appointmentDragEndDetails);
+        },
+       timeSlotViewSettings: TimeSlotViewSettings(numberOfDaysInView: 2,),
+        // onLongPress: (vale) {
+        //   print(vale);
+        // },
+       // timeZone: "Atlantic Standard Time",
+        dataSource: MeetingDataSource(_getDataSource()),
+
+        // by default the month appointment display mode set as Indicator, we can
+        // change the display mode as appointment using the appointment display
+        // mode property
+
+        // monthViewSettings: const MonthViewSettings(
+        //     appointmentDisplayMode: MonthAppointmentDisplayMode.appointment),
+      ),
     ));
   }
 
   List<Meeting> _getDataSource() {
     final List<Meeting> meetings = <Meeting>[];
     final DateTime today = DateTime.now();
-    final DateTime startTime = DateTime(today.year, today.month, today.day, 9);
-    final DateTime endTime = startTime.add(const Duration(hours: 2));
-    meetings.add(Meeting(
-        'Conference', startTime, endTime, const Color(0xFF0F8644), false));
+
+    for (int i = 1; i < 8; i++) {
+      final DateTime startTime =
+          DateTime(today.year, today.month, today.day, 1);
+      final DateTime endTime = DateTime(today.year, today.month, today.day,
+          2); //startTime.add(const Duration(hours: 14));
+      Random random = new Random();
+      int randomNumber = random.nextInt(100);
+      meetings.add(Meeting('Conference $i', startTime, endTime,
+          const Color(0xFF0F8644), false, randomNumber));
+    }
+
     return meetings;
   }
+
+  Widget appointmentBuilder(BuildContext context,
+      CalendarAppointmentDetails calendarAppointmentDetails) {
+    final Meeting appointment =
+        calendarAppointmentDetails.appointments.first;
+    return Column(
+      children: [
+        // Container(
+        //     width: calendarAppointmentDetails.bounds.width/3,
+        //     //height: calendarAppointmentDetails.bounds.height / 3,
+        //     color:Colors.amber,
+        //     child: const Center(
+        //       child: Icon(
+        //         Icons.group,
+        //         color: Colors.black,
+        //       ),
+        //     )),
+        Container(
+          width: calendarAppointmentDetails.bounds.width/3,
+          height: calendarAppointmentDetails.bounds.height,
+          color: Colors.amber,
+          child: Text(
+            '${appointment.eventName}${DateFormat(' (hh:mm a').format(appointment.from)}-${DateFormat('hh:mm a)').format(appointment.to)}',
+            textAlign: TextAlign.center,style: const TextStyle(fontSize: 10),
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class CustomAppointment extends Appointment {
+  final String description;
+
+  CustomAppointment({
+    required DateTime startTime,
+    required DateTime endTime,
+    required String subject,
+    required this.description,
+    required Color color,
+  }) : super(
+          startTime: startTime,
+          endTime: endTime,
+          subject: subject,
+          color: color,
+        );
 }
 
 /// An object to set the appointment collection data source to calendar, which
 /// used to map the custom appointment data to the calendar appointment, and
 /// allows to add, remove or reset the appointment collection.
-class MeetingDataSource extends CalendarDataSource {
+class MeetingDataSource extends CalendarDataSource<Meeting> {
   /// Creates a meeting data source, which used to set the appointment
   /// collection to the calendar
   MeetingDataSource(List<Meeting> source) {
@@ -99,13 +177,33 @@ class MeetingDataSource extends CalendarDataSource {
 
     return meetingData;
   }
+
+  @override
+  Meeting? convertAppointmentToObject(
+      Meeting? customData, Appointment appointment) {
+    // TODO: implement convertAppointmentToObject
+    // return Meeting(
+    //     from: appointment.startTime,
+    //     to: appointment.endTime,
+    //     eventName: appointment.subject,
+    //     background: appointment.color,
+    //     isAllDay: appointment.isAllDay,
+    //     id: appointment.id,
+    //     recurrenceRule: appointment.recurrenceRule,
+    //     recurrenceId: appointment.recurrenceId,
+    //     exceptionDates: appointment.recurrenceExceptionDates);
+
+    return Meeting('Conference', appointment.startTime, appointment.endTime,
+        const Color(0xFF0F8644), false, customData!.opId);
+  }
 }
 
 /// Custom business object class which contains properties to hold the detailed
 /// information about the event data which will be rendered in calendar.
 class Meeting {
   /// Creates a meeting class with required details.
-  Meeting(this.eventName, this.from, this.to, this.background, this.isAllDay);
+  Meeting(this.eventName, this.from, this.to, this.background, this.isAllDay,
+      this.opId);
 
   /// Event name which is equivalent to subject property of [Appointment].
   String eventName;
@@ -121,4 +219,6 @@ class Meeting {
 
   /// IsAllDay which is equivalent to isAllDay property of [Appointment].
   bool isAllDay;
+
+  int opId;
 }

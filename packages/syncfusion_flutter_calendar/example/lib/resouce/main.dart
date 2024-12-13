@@ -2,6 +2,7 @@ library event_calendar;
 
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -55,6 +56,7 @@ class EventCalendarState extends State<EventCalendar> {
 
   final now = DateTime.now();
   var selectedItem = 'Day';
+  int? currentTab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -65,238 +67,273 @@ class EventCalendarState extends State<EventCalendar> {
             child: SafeArea(
                 child: Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          IconButton(
-                              onPressed: () {
-                                _controller.backward!();
-
-                                setState(() {});
-                              },
-                              icon: const Icon(Icons.navigate_before)),
-                          GestureDetector(
-                            onTap: () {
-                              showCustomDialog();
-                            },
-                            child: Text(_controller.displayDate != null
-                                ? DateFormat('EEE, MMM dd yyyy')
-                                    .format(_controller.displayDate!)
-                                : DateFormat('EEE, MMM dd yyyy')
-                                    .format(DateTime.now())),
-                          ),
-                          IconButton(
-                              onPressed: () {
-                                _controller.forward!();
-                                setState(() {});
-                              },
-                              icon: const Icon(Icons.navigate_next)),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                        onPressed: () {
-                          final DateTime now = DateTime.now();
-                          _controller.displayDate =
-                              DateTime(now.year, now.month, now.day, 0, 0, 0);
-
-                          setState(() {});
-                        },
-                        icon: const Icon(Icons.today)),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    DropdownButton<String>(
-                      value: selectedItem,
-                      items: <String>['Day', 'Week', 'Month']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
+                Container(
+                  width: double.infinity,
+                  height: 50,
+                  margin: const EdgeInsets.only(left: 10, right: 10, top: 10),
+                  child: CupertinoSlidingSegmentedControl(
+                      groupValue: currentTab,
+                      children: const <int, Widget>{
+                        0: Padding(
+                          padding: EdgeInsets.only(top: 5, bottom: 6),
                           child: Text(
-                            value,
-                            style: const TextStyle(
-                                fontSize: 14, color: Colors.black54),
+                            'ListView',
                           ),
-                        );
-                      }).toList(),
-                      // Step 5.
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedItem = newValue!;
-                          if (newValue == 'Month') {
-                            _controller.view = CalendarView.timelineMonth;
-                            datePickerController.view =
-                                DateRangePickerView.year;
-                          } else if (newValue == 'Week') {
-                            _controller.view = CalendarView.timelineWeek;
-                            datePickerController.view =
-                                DateRangePickerView.month;
-                          } else {
-                            _controller.view = CalendarView.timelineDay;
-                            datePickerController.view =
-                                DateRangePickerView.month;
-                          }
-                        });
+                        ),
+                        1: Text(
+                          'Operatory View',
+                        ),
                       },
-                    )
-                  ],
+                      onValueChanged: (value) {
+                        setState(() {
+                          currentTab = value! as int;
+                        });
+                      }),
                 ),
-                Expanded(
-                  child: SfCalendar(
-                    viewNavigationMode: ViewNavigationMode.none,
-                    controller: _controller,
-                    //view: CalendarView.timelineDay,
-                    showDatePickerButton: false,
-                    // showTodayButton: true,
-                    headerHeight: 0,
-
-                    allowDragAndDrop: true,
-                    onLongPress: (daya) {},
-                    showCurrentTimeIndicator: false,
-                    timeRegionBuilder: (context, timeRegionDetails) {
-                      final String title = timeRegionDetails.region.text ?? "";
-
-                      return Container(
-                        padding: const EdgeInsets.all(8),
-                        margin: const EdgeInsets.all(2),
-                        decoration: blockOutColor(title == "lunch" ? 200 : 200,
-                            Color(0xFFFC4C4C4).withOpacity(.5)),
-                        child: Center(
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      );
-                    },
-                    specialRegions: [
-                      TimeRegion(
-                        text: 'Lunch',
-                        startTime: DateTime(now.year, now.month, now.day, 6),
-                        endTime: DateTime(now.year, now.month, now.day, 8),
-                        enablePointerInteraction:
-                            false, // only is a bug when it is false
-                      ),
-                      TimeRegion(
-                        text: 'Lunch',
-                        startTime: DateTime(now.year, now.month, now.day, 16),
-                        endTime: DateTime(now.year, now.month, now.day, 17),
-                        enablePointerInteraction:
-                            false, // only is a bug when it is false
-                      ),
-                      TimeRegion(
-                        text: 'Break',
-                        startTime: DateTime(now.year, now.month, now.day, 19),
-                        endTime: DateTime(now.year, now.month, now.day, 20),
-                        enablePointerInteraction:
-                            false, // only is a bug when it is false
-                      )
-                    ],
-                    appointmentBuilder: (context, calendarAppointmentDetails) {
-                      final Appointment appointment =
-                          calendarAppointmentDetails.appointments.first;
-                      String time =
-                          "${DateFormat('hh:mm a').format(appointment.startTime)} ${DateFormat('hh:mm a').format(appointment.endTime)}";
-
-                      return Container(
-                        //color: Colors.red,
-                        child: SingleChildScrollView(
-                          child: Container(
-                            //  padding: EdgeInsets.all(8),
-                            // margin: const EdgeInsets.only(left: 10,right: 10),
-                            margin: const EdgeInsets.all(0),
-                            //color: appointment.color,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(3),
-                              color: appointment.color,
-                              boxShadow: [
-                                BoxShadow(
-                                    color: appointment.color, spreadRadius: 3),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  appointment.subject,
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w600),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Text(
-                                  time,
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w400),
-                                  textAlign: TextAlign.center,
-                                ),
-                                // Text(
-                                //   appointment.subject,
-                                //   style: const TextStyle(
-                                //       color: Colors.black, fontWeight: FontWeight.bold),
-                                //   textAlign: TextAlign.center,
-                                // ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    onDragStart: (appointmentDragStartDetails) {
-                      // print(appointmentDragStartDetails);
-                    },
-                    onDragEnd: (appointmentDragEndDetails) {
-                      //  dragEnd(appointmentDragEndDetails);
-                    },
-                    onDragUpdate: (appointmentDragUpdateDetails) {
-                      // print(appointmentDragUpdateDetails);
-                    },
-                    allowedViews: const <CalendarView>[
-                      CalendarView.timelineDay,
-                      CalendarView.timelineWeek,
-                      CalendarView.timelineMonth,
-                      CalendarView.week,
-                    ],
-                    dataSource: events,
-                    timeSlotViewSettings: const TimeSlotViewSettings(
-                        //numberOfDaysInView: 3,
-                        //timeIntervalHeight: 120,
-
-                        timeIntervalWidth: 110,
-                        timeFormat: 'h a',
-                        //dateFormat: 'd',
-                        //dayFormat: 'EEE',
-                        timeInterval: Duration(minutes: 60)),
-                    onTap: (calendarTapDetails) {
-                      onCalendarTapped(calendarTapDetails);
-                    },
-                    resourceViewHeaderBuilder: (context, details) {
-                      return Center(
-                          child: Container(
-                              // color: Colors.white,
-                              child: Text(details.resource.displayName)));
-                    },
-                    resourceViewSettings: const ResourceViewSettings(
-                        displayNameTextStyle: TextStyle(color: Colors.black),
-                        showAvatar: false,
-                        size: 80,
-                        visibleResourceCount: 4),
-                  ),
-                ),
+                header(),
+                if (currentTab == 0) scheduleView() else operatoryView()
               ],
             ))));
   }
 
-  Future showCustomDialog() {
+  Expanded scheduleView() {
+    return const Expanded(
+        child: Center(child: Text('Appointment Data will show...')));
+  }
+
+  Expanded operatoryView() {
+    return Expanded(
+      child: Column(
+        children: [
+          Expanded(
+            child: SfCalendar(
+              viewNavigationMode: ViewNavigationMode.none,
+              controller: _controller,
+              //view: CalendarView.timelineDay,
+              showDatePickerButton: false,
+              // showTodayButton: true,
+              headerHeight: 0,
+
+              allowDragAndDrop: true,
+              onLongPress: (daya) {},
+              showCurrentTimeIndicator: false,
+              timeRegionBuilder: (context, timeRegionDetails) {
+                final String title = timeRegionDetails.region.text ?? "";
+
+                return Container(
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.all(2),
+                  decoration: blockOutColor(title == "lunch" ? 200 : 200,
+                      Color(0xFFFC4C4C4).withOpacity(.5)),
+                  child: Center(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              },
+              specialRegions: [
+                TimeRegion(
+                  text: 'Lunch',
+                  startTime: DateTime(now.year, now.month, now.day, 6),
+                  endTime: DateTime(now.year, now.month, now.day, 8),
+                  enablePointerInteraction:
+                      false, // only is a bug when it is false
+                ),
+                TimeRegion(
+                  text: 'Lunch',
+                  startTime: DateTime(now.year, now.month, now.day, 16),
+                  endTime: DateTime(now.year, now.month, now.day, 17),
+                  enablePointerInteraction:
+                      false, // only is a bug when it is false
+                ),
+                TimeRegion(
+                  text: 'Break',
+                  startTime: DateTime(now.year, now.month, now.day, 19),
+                  endTime: DateTime(now.year, now.month, now.day, 20),
+                  enablePointerInteraction:
+                      false, // only is a bug when it is false
+                )
+              ],
+              appointmentBuilder: (context, calendarAppointmentDetails) {
+                final Appointment appointment =
+                    calendarAppointmentDetails.appointments.first;
+                String time =
+                    "${DateFormat('hh:mm a').format(appointment.startTime)} ${DateFormat('hh:mm a').format(appointment.endTime)}";
+
+                return Container(
+                  //color: Colors.red,
+                  child: SingleChildScrollView(
+                    child: Container(
+                      //  padding: EdgeInsets.all(8),
+                      // margin: const EdgeInsets.only(left: 10,right: 10),
+                      margin: const EdgeInsets.all(0),
+                      //color: appointment.color,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(3),
+                        color: appointment.color,
+                        boxShadow: [
+                          BoxShadow(color: appointment.color, spreadRadius: 3),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            appointment.subject,
+                            style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            time,
+                            style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w400),
+                            textAlign: TextAlign.center,
+                          ),
+                          // Text(
+                          //   appointment.subject,
+                          //   style: const TextStyle(
+                          //       color: Colors.black, fontWeight: FontWeight.bold),
+                          //   textAlign: TextAlign.center,
+                          // ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+              onDragStart: (appointmentDragStartDetails) {
+                // print(appointmentDragStartDetails);
+              },
+              onDragEnd: (appointmentDragEndDetails) {
+                //  dragEnd(appointmentDragEndDetails);
+              },
+              onDragUpdate: (appointmentDragUpdateDetails) {
+                // print(appointmentDragUpdateDetails);
+              },
+              allowedViews: const <CalendarView>[
+                CalendarView.timelineDay,
+                CalendarView.timelineWeek,
+                CalendarView.timelineMonth,
+                CalendarView.week,
+              ],
+              dataSource: events,
+              timeSlotViewSettings: const TimeSlotViewSettings(
+                  //numberOfDaysInView: 3,
+                  //timeIntervalHeight: 120,
+
+                  timeIntervalWidth: 110,
+                  timeFormat: 'h a',
+                  //dateFormat: 'd',
+                  //dayFormat: 'EEE',
+                  timeInterval: Duration(minutes: 60)),
+              onTap: (calendarTapDetails) {
+                onCalendarTapped(calendarTapDetails);
+              },
+              resourceViewHeaderBuilder: (context, details) {
+                return Center(
+                    child: Container(
+                        // color: Colors.white,
+                        child: Text(details.resource.displayName)));
+              },
+              resourceViewSettings: const ResourceViewSettings(
+                  displayNameTextStyle: TextStyle(color: Colors.black),
+                  showAvatar: false,
+                  size: 80,
+                  visibleResourceCount: 4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Row header() {
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                  onPressed: () {
+                    _controller.backward!();
+
+                    setState(() {});
+                  },
+                  icon: const Icon(Icons.navigate_before)),
+              GestureDetector(
+                onTap: () {
+                  showCustomDialog();
+                },
+                child: Text(_controller.displayDate != null
+                    ? DateFormat('EEE, MMM dd yyyy')
+                        .format(_controller.displayDate!)
+                    : DateFormat('EEE, MMM dd yyyy').format(DateTime.now())),
+              ),
+              IconButton(
+                  onPressed: () {
+                    _controller.forward!();
+                    setState(() {});
+                  },
+                  icon: const Icon(Icons.navigate_next)),
+            ],
+          ),
+        ),
+        IconButton(
+            onPressed: () {
+              final DateTime now = DateTime.now();
+              _controller.displayDate =
+                  DateTime(now.year, now.month, now.day, 0, 0, 0);
+
+              setState(() {});
+            },
+            icon: const Icon(Icons.today)),
+        const SizedBox(
+          width: 10,
+        ),
+        DropdownButton<String>(
+          value: selectedItem,
+          items: <String>['Day', 'Week', 'Month']
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(
+                value,
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+            );
+          }).toList(),
+          // Step 5.
+          onChanged: (String? newValue) {
+            setState(() {
+              selectedItem = newValue!;
+              if (newValue == 'Month') {
+                _controller.view = CalendarView.timelineMonth;
+                datePickerController.view = DateRangePickerView.year;
+              } else if (newValue == 'Week') {
+                _controller.view = CalendarView.timelineWeek;
+                datePickerController.view = DateRangePickerView.month;
+              } else {
+                _controller.view = CalendarView.timelineDay;
+                datePickerController.view = DateRangePickerView.month;
+              }
+            });
+          },
+        )
+      ],
+    );
+  }
+
+  Future<dynamic> showCustomDialog() {
     datePickerController.displayDate = _controller.selectedDate;
 
     return showDialog(
